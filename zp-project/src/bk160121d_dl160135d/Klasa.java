@@ -19,14 +19,19 @@ import java.util.Iterator;
 import java.util.LinkedList;
 
 import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
 
 import org.bouncycastle.bcpg.ArmoredOutputStream;
 import org.bouncycastle.bcpg.HashAlgorithmTags;
+import org.bouncycastle.bcpg.PublicKeyPacket;
+import org.bouncycastle.bcpg.SecretKeyPacket;
 import org.bouncycastle.openpgp.PGPEncryptedData;
 import org.bouncycastle.openpgp.PGPException;
 import org.bouncycastle.openpgp.PGPKeyPair;
 import org.bouncycastle.openpgp.PGPKeyRingGenerator;
+import org.bouncycastle.openpgp.PGPPrivateKey;
 import org.bouncycastle.openpgp.PGPPublicKey;
+import org.bouncycastle.openpgp.PGPPublicKeyRing;
 import org.bouncycastle.openpgp.PGPSecretKey;
 import org.bouncycastle.openpgp.PGPSecretKeyRing;
 import org.bouncycastle.openpgp.PGPSecretKeyRingCollection;
@@ -62,8 +67,7 @@ public class Klasa {
             keyRingCollection.encode(new FileOutputStream("keystore"));
         }
         
-        
-        public static void printKeyRingCollection() {
+        private static void printKeyRingCollection() {
             Iterator<PGPSecretKeyRing> iter =  keyRingCollection.getKeyRings();
             while (iter.hasNext()) {
                 PGPSecretKeyRing secretKeyRing = iter.next();
@@ -72,7 +76,45 @@ public class Klasa {
                 while (iter2.hasNext()) {
                     System.out.println(iter2.next());
                 }
+                exportRSAKeyPair(secretKey);
             }
+        }
+        
+        private static void exportRSAKeyPair(PGPSecretKey rsaKey) {
+            try {
+                FileOutputStream streamSecret = new FileOutputStream("secret.asc");
+                FileOutputStream streamPublic = new FileOutputStream("public.asc");
+                
+                ArmoredOutputStream armoredSecret = new ArmoredOutputStream(streamSecret);
+                ArmoredOutputStream armoredPublic = new ArmoredOutputStream(streamPublic);
+                
+                rsaKey.encode(armoredSecret);
+                rsaKey.getPublicKey().encode(armoredPublic);
+                
+                armoredSecret.close();
+                armoredPublic.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+        
+        private static void importRSAKeyPair() {
+            try {
+                FileInputStream streamPublic;
+                streamPublic = new FileInputStream("public.asc");
+                PGPSecretKeyRing publicKeyRing = new PGPSe(streamPublic, new BcKeyFingerprintCalculator());
+                
+            } catch (FileNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            
         }
         
         public static void main(
@@ -83,8 +125,11 @@ public class Klasa {
             
             keyRingCollection = new PGPSecretKeyRingCollection(new FileInputStream("keystore"), new BcKeyFingerprintCalculator());
 
-            // generateRSAKeyPair(1024, "biza novi", "fraza".toCharArray());
+            generateRSAKeyPair(1024, "biza novi", "fraza".toCharArray());
             
+            // KeyGenerator keyGenerator = KeyGenerator.getInstance("DESede");
+            // keyGenerator.init(168);
+
             printKeyRingCollection();
             
         }

@@ -32,12 +32,15 @@ import org.bouncycastle.openpgp.PGPKeyRingGenerator;
 import org.bouncycastle.openpgp.PGPPrivateKey;
 import org.bouncycastle.openpgp.PGPPublicKey;
 import org.bouncycastle.openpgp.PGPPublicKeyRing;
+import org.bouncycastle.openpgp.PGPPublicKeyRingCollection;
 import org.bouncycastle.openpgp.PGPSecretKey;
 import org.bouncycastle.openpgp.PGPSecretKeyRing;
 import org.bouncycastle.openpgp.PGPSecretKeyRingCollection;
 import org.bouncycastle.openpgp.PGPSignature;
+import org.bouncycastle.openpgp.PGPUtil;
 import org.bouncycastle.openpgp.operator.PGPDigestCalculator;
 import org.bouncycastle.openpgp.operator.bc.BcKeyFingerprintCalculator;
+import org.bouncycastle.openpgp.operator.jcajce.JcaKeyFingerprintCalculator;
 import org.bouncycastle.openpgp.operator.jcajce.JcaPGPContentSignerBuilder;
 import org.bouncycastle.openpgp.operator.jcajce.JcaPGPDigestCalculatorProviderBuilder;
 import org.bouncycastle.openpgp.operator.jcajce.JcaPGPKeyPair;
@@ -46,9 +49,15 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 public class Klasa {
         
-        private static PGPSecretKeyRingCollection keyRingCollection = null;
-        
-        private static void generateRSAKeyPair(int keysize, String identity, char[] passPhrase) throws PGPException, NoSuchAlgorithmException, NoSuchProviderException, FileNotFoundException, IOException {
+        private static PGPSecretKeyRingCollection secretCollection = null;
+        private static PGPPublicKeyRingCollection publicCollection = null;
+
+        private static void generateRSAKeyPair(
+                int keysize,
+                String identity,
+                char[] passPhrase)
+            throws PGPException, NoSuchAlgorithmException, NoSuchProviderException, FileNotFoundException, IOException
+        {
             KeyPairGenerator    kpg = KeyPairGenerator.getInstance("RSA", "BC");
             
             kpg.initialize(keysize);
@@ -58,17 +67,17 @@ public class Klasa {
             PGPDigestCalculator sha1Calc = new JcaPGPDigestCalculatorProviderBuilder().build().get(HashAlgorithmTags.SHA1);
             PGPKeyPair          keyPair = new JcaPGPKeyPair(PGPPublicKey.RSA_GENERAL, pair, new Date());
             PGPKeyRingGenerator    keyRingGen = new PGPKeyRingGenerator(PGPSignature.DEFAULT_CERTIFICATION, keyPair,
-                    identity, sha1Calc, null, null, new JcaPGPContentSignerBuilder(keyPair.getPublicKey().getAlgorithm(), HashAlgorithmTags.SHA1), new JcePBESecretKeyEncryptorBuilder(PGPEncryptedData.CAST5, sha1Calc).setProvider("BC").build(passPhrase));
-            // PGPSecretKey        secretKey = new PGPSecretKey(PGPSignature.DEFAULT_CERTIFICATION, keyPair, identity, sha1Calc, null, null, new JcaPGPContentSignerBuilder(keyPair.getPublicKey().getAlgorithm(), HashAlgorithmTags.SHA1), new JcePBESecretKeyEncryptorBuilder(PGPEncryptedData.CAST5, sha1Calc).setProvider("BC").build(passPhrase));
+                    identity, sha1Calc, null, null,
+                    new JcaPGPContentSignerBuilder(keyPair.getPublicKey().getAlgorithm(), HashAlgorithmTags.SHA1),
+                    new JcePBESecretKeyEncryptorBuilder(PGPEncryptedData.CAST5, sha1Calc).setProvider("BC").build(passPhrase));
             
             PGPSecretKeyRing secretKeyRing = keyRingGen.generateSecretKeyRing();
-            
-            keyRingCollection = PGPSecretKeyRingCollection.addSecretKeyRing(keyRingCollection, secretKeyRing);
-            keyRingCollection.encode(new FileOutputStream("keystore"));
+
+            secretCollection = PGPSecretKeyRingCollection.addSecretKeyRing(secretCollection, secretKeyRing);
         }
         
         private static void printKeyRingCollection() {
-            Iterator<PGPSecretKeyRing> iter =  keyRingCollection.getKeyRings();
+            Iterator<PGPSecretKeyRing> iter =  secretCollection.getKeyRings();
             while (iter.hasNext()) {
                 PGPSecretKeyRing secretKeyRing = iter.next();
                 PGPSecretKey secretKey = secretKeyRing.getSecretKey();
@@ -76,7 +85,6 @@ public class Klasa {
                 while (iter2.hasNext()) {
                     System.out.println(iter2.next());
                 }
-                exportRSAKeyPair(secretKey);
             }
         }
         
@@ -101,12 +109,11 @@ public class Klasa {
             }
         }
         
-        private static void importRSAKeyPair() {
+        private static void importPublicKey() {
             try {
-                FileInputStream streamPublic;
-                streamPublic = new FileInputStream("public.asc");
-                PGPSecretKeyRing publicKeyRing = new PGPSe(streamPublic, new BcKeyFingerprintCalculator());
-                
+                FileInputStream stream = new FileInputStream("public.asc");
+                PGPPublicKeyRing publicKeyRing = new PGPPublicKeyRing(PGPUtil.getDecoderStream(stream), new BcKeyFingerprintCalculator());
+                Klasa.publicCollection = PGPPublicKeyRingCollection.addPublicKeyRing(Klasa.publicCollection, publicKeyRing);
             } catch (FileNotFoundException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -117,15 +124,36 @@ public class Klasa {
             
         }
         
+        private static void importSecretKey() {
+            try {
+                FileInputStream stream = new FileInputStream("secret.asc");
+                PGPSecretKeyRing secretKeyRing = new PGPSecretKeyRing(PGPUtil.getDecoderStream(stream), new BcKeyFingerprintCalculator());
+                Klasa.secretCollection = PGPSecretKeyRingCollection.addSecretKeyRing(Klasa.secretCollection, secretKeyRing);
+            } catch (FileNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (PGPException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+        
         public static void main(
             String[] args)
             throws Exception
         {
             Security.addProvider(new BouncyCastleProvider());
             
-            keyRingCollection = new PGPSecretKeyRingCollection(new FileInputStream("keystore"), new BcKeyFingerprintCalculator());
-
-            generateRSAKeyPair(1024, "biza novi", "fraza".toCharArray());
+            InputStream secretKeystore = PGPUtil.getDecoderStream(new FileInputStream("secret-keystore"));
+            InputStream publicKeystore = PGPUtil.getDecoderStream(new FileInputStream("public-keystore"));
+            
+            secretCollection = new PGPSecretKeyRingCollection(secretKeystore, new BcKeyFingerprintCalculator());
+            publicCollection = new PGPPublicKeyRingCollection(publicKeystore, new BcKeyFingerprintCalculator());
+            
+            // generateRSAKeyPair(1024, "biza <biza@mail.com>", "fraza".toCharArray());
             
             // KeyGenerator keyGenerator = KeyGenerator.getInstance("DESede");
             // keyGenerator.init(168);

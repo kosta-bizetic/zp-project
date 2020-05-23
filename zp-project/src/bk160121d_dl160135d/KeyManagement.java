@@ -18,6 +18,7 @@ import org.bouncycastle.openpgp.PGPEncryptedData;
 import org.bouncycastle.openpgp.PGPException;
 import org.bouncycastle.openpgp.PGPKeyPair;
 import org.bouncycastle.openpgp.PGPKeyRingGenerator;
+import org.bouncycastle.openpgp.PGPPrivateKey;
 import org.bouncycastle.openpgp.PGPPublicKey;
 import org.bouncycastle.openpgp.PGPPublicKeyRing;
 import org.bouncycastle.openpgp.PGPPublicKeyRingCollection;
@@ -31,6 +32,7 @@ import org.bouncycastle.openpgp.operator.bc.BcKeyFingerprintCalculator;
 import org.bouncycastle.openpgp.operator.jcajce.JcaPGPContentSignerBuilder;
 import org.bouncycastle.openpgp.operator.jcajce.JcaPGPDigestCalculatorProviderBuilder;
 import org.bouncycastle.openpgp.operator.jcajce.JcaPGPKeyPair;
+import org.bouncycastle.openpgp.operator.jcajce.JcePBESecretKeyDecryptorBuilder;
 import org.bouncycastle.openpgp.operator.jcajce.JcePBESecretKeyEncryptorBuilder;
 
 public class KeyManagement {
@@ -88,7 +90,7 @@ public class KeyManagement {
         return KeyManagement.instance;
     }
 
-    public void generateRSAKeyPair(
+    public long generateRSAKeyPair(
             RSA_KEYSIZE keysize,
             String identity,
             char[] passPhrase)
@@ -110,18 +112,50 @@ public class KeyManagement {
         PGPSecretKeyRing secretKeyRing = keyRingGen.generateSecretKeyRing();
 
         secretCollection = PGPSecretKeyRingCollection.addSecretKeyRing(secretCollection, secretKeyRing);
+        return secretKeyRing.getSecretKey().getKeyID();
     }
 
     public void printSecretKeyRingCollection() {
         Iterator<PGPSecretKeyRing> iter =  secretCollection.getKeyRings();
         while (iter.hasNext()) {
-            PGPSecretKeyRing secretKeyRing = iter.next();
-            PGPSecretKey secretKey = secretKeyRing.getSecretKey();
-            Iterator<String> iter2 = secretKey.getUserIDs();
+            PGPSecretKeyRing secKeyRing = iter.next();
+            PGPSecretKey secKey = secKeyRing.getSecretKey();
+            Iterator<String> iter2 = secKey.getUserIDs();
             while (iter2.hasNext()) {
-                System.out.println(iter2.next());
+                System.out.println(iter2.next() + " " + secKey.getKeyID());
             }
         }
+    }
+
+    public PGPPublicKey getPublicKey(long keyID)
+    {
+        PGPPublicKey pubKey = null;
+        try {
+            pubKey = this.publicCollection.getPublicKey(keyID);
+            if (pubKey == null) {
+                PGPSecretKey secKey = this.secretCollection.getSecretKey(keyID);
+                if (secKey != null) {
+                    pubKey = secKey.getPublicKey();
+                }
+            }
+        } catch (PGPException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return pubKey;
+    }
+
+    public PGPPrivateKey getPrivateKey(long keyID, char[] pass)
+            throws PGPException, NoSuchProviderException
+    {
+        PGPSecretKey secKey = this.secretCollection.getSecretKey(keyID);
+
+        if (secKey == null)
+        {
+            return null;
+        }
+
+        return secKey.extractPrivateKey(new JcePBESecretKeyDecryptorBuilder().setProvider("BC").build(pass));
     }
 
     public void exportSecretKey(PGPSecretKey key, String path) {
@@ -133,6 +167,15 @@ public class KeyManagement {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    public void exportSecretKey(long keyID, String path) {
+        try {
+            exportSecretKey(this.secretCollection.getSecretKey(keyID), path);
+        } catch (PGPException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }

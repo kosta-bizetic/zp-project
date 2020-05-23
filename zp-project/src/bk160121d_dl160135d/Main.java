@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -45,11 +46,12 @@ import org.bouncycastle.openpgp.operator.jcajce.JcaPGPContentSignerBuilder;
 import org.bouncycastle.openpgp.operator.jcajce.JcaPGPDigestCalculatorProviderBuilder;
 import org.bouncycastle.openpgp.operator.jcajce.JcaPGPKeyPair;
 import org.bouncycastle.openpgp.operator.jcajce.JcePBESecretKeyEncryptorBuilder;
+
+import bk160121d_dl160135d.KeyManagement.RSA_KEYSIZE;
+
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
-public class Klasa {
-
-
+public class Main {
 
         public static void main(
             String[] args)
@@ -57,10 +59,17 @@ public class Klasa {
         {
             Security.addProvider(new BouncyCastleProvider());
 
-            // generateRSAKeyPair(1024, "biza <biza@mail.com>", "fraza".toCharArray());
+            KeyManagement keyManagement = KeyManagement.getInstance();
 
-            // KeyGenerator keyGenerator = KeyGenerator.getInstance("DESede");
-            // keyGenerator.init(168);
+            List<PGPPublicKey> pubKeys = new LinkedList<PGPPublicKey>();
+
+            pubKeys.add(keyManagement.getPublicKey(688238868389858045l));
+            pubKeys.add(keyManagement.getPublicKey(6921129671440841737l));
+
+            CryptionManagement.encryptFile("message.txt.pgp", "message.txt", pubKeys , true, PGPEncryptedData.IDEA);
+
+            keyManagement.printSecretKeyRingCollection();
+            keyManagement.close();
 
         }
 }

@@ -66,10 +66,11 @@ public class Main {
             pubKeys.add(keyManagement.getPublicKey(688238868389858045l));
             pubKeys.add(keyManagement.getPublicKey(6921129671440841737l));
 
-            CryptionManagement.encryptFile("message.txt.pgp", "message.txt", pubKeys , true, PGPEncryptedData.IDEA);
+            // CryptionManagement.encryptFile("message.txt.gpg", "message.txt", pubKeys , false, true, PGPEncryptedData.IDEA);
+
+            CryptionManagement.decryptFile("message.txt.gpg", keyManagement.getSecretKeyRingCollection(), "stagod".toCharArray());
 
             keyManagement.printSecretKeyRingCollection();
             keyManagement.close();
-
         }
 }

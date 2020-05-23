@@ -145,17 +145,9 @@ public class KeyManagement {
         return pubKey;
     }
 
-    public PGPPrivateKey getPrivateKey(long keyID, char[] pass)
-            throws PGPException, NoSuchProviderException
+    public PGPSecretKeyRingCollection getSecretKeyRingCollection()
     {
-        PGPSecretKey secKey = this.secretCollection.getSecretKey(keyID);
-
-        if (secKey == null)
-        {
-            return null;
-        }
-
-        return secKey.extractPrivateKey(new JcePBESecretKeyDecryptorBuilder().setProvider("BC").build(pass));
+        return this.secretCollection;
     }
 
     public void exportSecretKey(PGPSecretKey key, String path) {

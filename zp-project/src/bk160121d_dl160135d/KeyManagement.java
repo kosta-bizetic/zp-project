@@ -18,7 +18,6 @@ import org.bouncycastle.openpgp.PGPEncryptedData;
 import org.bouncycastle.openpgp.PGPException;
 import org.bouncycastle.openpgp.PGPKeyPair;
 import org.bouncycastle.openpgp.PGPKeyRingGenerator;
-import org.bouncycastle.openpgp.PGPPrivateKey;
 import org.bouncycastle.openpgp.PGPPublicKey;
 import org.bouncycastle.openpgp.PGPPublicKeyRing;
 import org.bouncycastle.openpgp.PGPPublicKeyRingCollection;
@@ -32,7 +31,6 @@ import org.bouncycastle.openpgp.operator.bc.BcKeyFingerprintCalculator;
 import org.bouncycastle.openpgp.operator.jcajce.JcaPGPContentSignerBuilder;
 import org.bouncycastle.openpgp.operator.jcajce.JcaPGPDigestCalculatorProviderBuilder;
 import org.bouncycastle.openpgp.operator.jcajce.JcaPGPKeyPair;
-import org.bouncycastle.openpgp.operator.jcajce.JcePBESecretKeyDecryptorBuilder;
 import org.bouncycastle.openpgp.operator.jcajce.JcePBESecretKeyEncryptorBuilder;
 
 public class KeyManagement {
@@ -118,11 +116,12 @@ public class KeyManagement {
     public void printSecretKeyRingCollection() {
         Iterator<PGPSecretKeyRing> iter =  secretCollection.getKeyRings();
         while (iter.hasNext()) {
-            PGPSecretKeyRing secKeyRing = iter.next();
-            PGPSecretKey secKey = secKeyRing.getSecretKey();
-            Iterator<String> iter2 = secKey.getUserIDs();
+            PGPSecretKeyRing secretKeyRing = iter.next();
+            PGPSecretKey secretKey = secretKeyRing.getSecretKey();
+            Iterator<String> iter2 = secretKey.getUserIDs();
+            System.out.println(secretKey.getKeyID());
             while (iter2.hasNext()) {
-                System.out.println(iter2.next() + " " + secKey.getKeyID());
+                System.out.println(iter2.next() + " " + secretKey.getKeyID());
             }
         }
     }

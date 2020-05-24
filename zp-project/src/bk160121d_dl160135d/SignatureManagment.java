@@ -14,8 +14,6 @@ import java.util.Iterator;
 
 import org.bouncycastle.bcpg.ArmoredOutputStream;
 import org.bouncycastle.bcpg.BCPGOutputStream;
-import org.bouncycastle.openpgp.PGPCompressedData;
-import org.bouncycastle.openpgp.PGPCompressedDataGenerator;
 import org.bouncycastle.openpgp.PGPException;
 import org.bouncycastle.openpgp.PGPLiteralData;
 import org.bouncycastle.openpgp.PGPLiteralDataGenerator;
@@ -50,10 +48,6 @@ public class SignatureManagment {
         in = PGPUtil.getDecoderStream(in);
 
         JcaPGPObjectFactory pgpFact = new JcaPGPObjectFactory(in);
-
-        // TODO: Provera da li je kompresovano
-        PGPCompressedData c1 = (PGPCompressedData) pgpFact.nextObject();
-        pgpFact = new JcaPGPObjectFactory(c1.getDataStream());
 
         PGPOnePassSignatureList p1 = (PGPOnePassSignatureList) pgpFact.nextObject();
         PGPOnePassSignature ops = p1.get(0);
@@ -102,9 +96,7 @@ public class SignatureManagment {
             pgpSignatureGenerator.setHashedSubpackets(pgpSignatureSubpacketGenerator.generate());
         }
 
-        PGPCompressedDataGenerator pgpCompressedDataGenerator = new PGPCompressedDataGenerator(PGPCompressedData.ZIP);
-
-        BCPGOutputStream bOut = new BCPGOutputStream(pgpCompressedDataGenerator.open(out));
+        BCPGOutputStream bOut = new BCPGOutputStream(out);
         pgpSignatureGenerator.generateOnePassVersion(false).encode(bOut);
 
         File file = new File(filePath);
@@ -123,7 +115,6 @@ public class SignatureManagment {
 
         pgpSignatureGenerator.generate().encode(bOut);
 
-        pgpCompressedDataGenerator.close();
         out.close();
     }
 

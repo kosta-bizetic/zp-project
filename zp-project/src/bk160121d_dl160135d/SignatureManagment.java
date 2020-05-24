@@ -2,11 +2,14 @@ package bk160121d_dl160135d;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.SignatureException;
+import java.util.Date;
 import java.util.Iterator;
 
 import org.bouncycastle.bcpg.ArmoredOutputStream;
@@ -16,79 +19,69 @@ import org.bouncycastle.openpgp.PGPCompressedDataGenerator;
 import org.bouncycastle.openpgp.PGPException;
 import org.bouncycastle.openpgp.PGPLiteralData;
 import org.bouncycastle.openpgp.PGPLiteralDataGenerator;
+import org.bouncycastle.openpgp.PGPOnePassSignature;
+import org.bouncycastle.openpgp.PGPOnePassSignatureList;
 import org.bouncycastle.openpgp.PGPPrivateKey;
+import org.bouncycastle.openpgp.PGPPublicKey;
 import org.bouncycastle.openpgp.PGPSecretKey;
 import org.bouncycastle.openpgp.PGPSignature;
 import org.bouncycastle.openpgp.PGPSignatureGenerator;
+import org.bouncycastle.openpgp.PGPSignatureList;
 import org.bouncycastle.openpgp.PGPSignatureSubpacketGenerator;
 import org.bouncycastle.openpgp.PGPUtil;
+import org.bouncycastle.openpgp.jcajce.JcaPGPObjectFactory;
 import org.bouncycastle.openpgp.operator.jcajce.JcaPGPContentSignerBuilder;
+import org.bouncycastle.openpgp.operator.jcajce.JcaPGPContentVerifierBuilderProvider;
 import org.bouncycastle.openpgp.operator.jcajce.JcePBESecretKeyDecryptorBuilder;
 
 public class SignatureManagment {
 
-//    public static void verifyFile(InputStream in) throws Exception
-//    {
-//        in = PGPUtil.getDecoderStream(in);
-//
-//        JcaPGPObjectFactory pgpFact = new JcaPGPObjectFactory(in);
-//
-//        if (obj instanceof PGPOnePassSignatureList) {
-//            PGPOnePassSignatureList p1 = (PGPOnePassSignatureList) obj;
-//            PGPOnePassSignature ops = p1.get(0);
-//
-//            PGPLiteralData p2 = (PGPLiteralData) pgpFact.nextObject();
-//            InputStream dIn = p2.getInputStream();
-//
-//            PGPPublicKey key = KeyManagement.getInstance().getPublicKey(ops.getKeyID());
-//
-//            FileOutputStream out = new FileOutputStream(p2.getFileName());
-//
-//            ops.init(new JcaPGPContentVerifierBuilderProvider().setProvider("BC"), key);
-//
-//            int ch;
-//            while ((ch = dIn.read()) >= 0) {
-//                ops.update((byte)ch);
-//                out.write(ch);
-//            }
-//            out.close();
-//
-//            PGPSignatureList p3 = (PGPSignatureList) pgpFact.nextObject();
-//
-//            if (ops.verify(p3.get(0))) {
-//                System.out.println("Signature verified.\n Signed by: " + key.getUserIDs().next());
-//            } else {
-//                System.out.println("Signature verification failed.");
-//            }
-//        } else if (obj instanceof PGPSignatureList) {
-//            PGPSignatureList p1 = (PGPSignatureList) obj;
-//            PGPSignature ops = p1.get(0);
-//
-//            System.out.println("nesto" + pgpFact.nextObject().getClass().getName());
-//
-//            PGPLiteralData p2 = (PGPLiteralData) pgpFact.nextObject();
-//            InputStream dIn = p2.getInputStream();
-//
-//            PGPPublicKey key = KeyManagement.getInstance().getPublicKey(ops.getKeyID());
-//
-//            FileOutputStream out = new FileOutputStream(p2.getFileName());
-//
-//            ops.init(new JcaPGPContentVerifierBuilderProvider().setProvider("BC"), key);
-//
-//            int ch;
-//            while ((ch = dIn.read()) >= 0) {
-//                ops.update((byte)ch);
-//                out.write(ch);
-//            }
-//            out.close();
-//
-//            if (ops.verify()) {
-//                System.out.println("Signature verified.\n Signed by: " + key.getUserIDs().next());
-//            } else {
-//                System.out.println("Signature verification failed.");
-//            }
-//        }
-//    }
+    public static void verifyFile(String filePath) {
+        try (InputStream in = new FileInputStream(filePath)) {
+            verifyFile(in);
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    private static void verifyFile(InputStream in) throws Exception
+    {
+        in = PGPUtil.getDecoderStream(in);
+
+        JcaPGPObjectFactory pgpFact = new JcaPGPObjectFactory(in);
+
+        // TODO: Provera da li je kompresovano
+        PGPCompressedData c1 = (PGPCompressedData) pgpFact.nextObject();
+        pgpFact = new JcaPGPObjectFactory(c1.getDataStream());
+
+        PGPOnePassSignatureList p1 = (PGPOnePassSignatureList) pgpFact.nextObject();
+        PGPOnePassSignature ops = p1.get(0);
+
+        PGPLiteralData p2 = (PGPLiteralData) pgpFact.nextObject();
+        InputStream dIn = p2.getInputStream();
+
+        PGPPublicKey key = KeyManagement.getInstance().getPublicKey(ops.getKeyID());
+
+        FileOutputStream out = new FileOutputStream(p2.getFileName() + "_" + (new Date()).getTime());
+
+        ops.init(new JcaPGPContentVerifierBuilderProvider().setProvider("BC"), key);
+
+        int ch;
+        while ((ch = dIn.read()) >= 0) {
+            ops.update((byte)ch);
+            out.write(ch);
+        }
+        out.close();
+
+        PGPSignatureList p3 = (PGPSignatureList) pgpFact.nextObject();
+
+        if (ops.verify(p3.get(0))) {
+            System.out.println("Signature verified.\n Signed by: " + key.getUserIDs().next());
+        } else {
+            System.out.println("Signature verification failed.");
+        }
+    }
 
     public static void signFile(String filePath, long keyID, OutputStream out, char[] passPhrase)
             throws IOException, NoSuchAlgorithmException, NoSuchProviderException, PGPException, SignatureException {

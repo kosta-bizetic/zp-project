@@ -9,11 +9,15 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.Security;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 
 import org.bouncycastle.bcpg.ArmoredOutputStream;
 import org.bouncycastle.bcpg.HashAlgorithmTags;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openpgp.PGPEncryptedData;
 import org.bouncycastle.openpgp.PGPException;
 import org.bouncycastle.openpgp.PGPKeyPair;
@@ -111,6 +115,42 @@ public class KeyManagement {
 
         secretCollection = PGPSecretKeyRingCollection.addSecretKeyRing(secretCollection, secretKeyRing);
         return secretKeyRing.getSecretKey().getKeyID();
+    }
+
+    public List<List<String>> getSecretKeyList() {
+        List<List<String>> ret = new ArrayList<>();
+        Iterator<PGPSecretKeyRing> iter =  secretCollection.getKeyRings();
+        while (iter.hasNext()) {
+            List<String> cur = new ArrayList<>();
+            PGPSecretKeyRing secretKeyRing = iter.next();
+            PGPSecretKey secretKey = secretKeyRing.getSecretKey();
+            Iterator<String> iter2 = secretKey.getUserIDs();
+            String userId = iter2.next();
+            cur.add(userId.split("<")[0].strip());
+            String email = userId.split("<")[1];
+            cur.add(email.substring(0, email.length() - 1));
+            cur.add(String.valueOf(secretKey.getKeyID()));
+            ret.add(cur);
+        }
+        return ret;
+    }
+
+    public List<List<String>> getPublicKeyList() {
+        List<List<String>> ret = new ArrayList<>();
+        Iterator<PGPPublicKeyRing> iter =  publicCollection.getKeyRings();
+        while (iter.hasNext()) {
+            List<String> cur = new ArrayList<>();
+            PGPPublicKeyRing publicKeyRing = iter.next();
+            PGPPublicKey publicKey = publicKeyRing.getPublicKey();
+            Iterator<String> iter2 = publicKey.getUserIDs();
+            String userId = iter2.next();
+            cur.add(userId.split("<")[0].strip());
+            String email = userId.split("<")[1];
+            cur.add(email.substring(0, email.length() - 1));
+            cur.add(String.valueOf(publicKey.getKeyID()));
+            ret.add(cur);
+        }
+        return ret;
     }
 
     public void printSecretKeyRingCollection() {
@@ -219,6 +259,14 @@ public class KeyManagement {
     }
 
     public static void main(String[] args) {
-
+        Security.addProvider(new BouncyCastleProvider());
+        try {
+            KeyManagement.getInstance().generateRSAKeyPair(RSA_KEYSIZE.MEDIUM, "Stagod Stagod <stagod@gmail.com>", "sifra".toCharArray());
+        } catch (NoSuchAlgorithmException | NoSuchProviderException | PGPException | IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        KeyManagement.getInstance().close();
+        KeyManagement.getInstance().printSecretKeyRingCollection();
     }
 }

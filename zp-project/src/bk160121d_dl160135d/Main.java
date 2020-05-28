@@ -10,8 +10,15 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
+import javax.swing.BorderFactory;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.border.TitledBorder;
+
 public class Main extends Frame {
     private static final long serialVersionUID = 1L;
+
+    private KeyManagement keyManagement = KeyManagement.getInstance();
 
     private String selectFile() {
         FileDialog fd = new FileDialog(new Frame());
@@ -69,10 +76,21 @@ public class Main extends Frame {
         setMenuBar(menuBar);
     }
 
+    private void addKeysTable(String title, java.util.List<java.util.List<String>> keyInfoList) {
+        JTable jt = new JTable(new KeysTableModel(keyInfoList));
+        JScrollPane sp = new JScrollPane(jt);
+        sp.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),
+                     title,
+                     TitledBorder.CENTER,
+                     TitledBorder.TOP));
+        add(sp);
+    }
+
     private void addComponents() {
         addMenu();
         setLayout(new GridLayout(2, 1));
-
+        addKeysTable("My Keys", keyManagement.getSecretKeyList());
+        addKeysTable("Other Keys", keyManagement.getPublicKeyList());
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent we) {
@@ -92,30 +110,4 @@ public class Main extends Frame {
         new Main();
     }
 
-//        public static void main(
-//            String[] args)
-//            throws Exception
-//        {
-//            Security.addProvider(new BouncyCastleProvider());
-//
-//            KeyManagement keyManagement = KeyManagement.getInstance();
-//
-//            List<PGPPublicKey> pubKeys = new LinkedList<PGPPublicKey>();
-//
-//            pubKeys.add(keyManagement.getPublicKey(688238868389858045l));
-//            pubKeys.add(keyManagement.getPublicKey(6921129671440841737l));
-//
-//            FileOutputStream out = new FileOutputStream("message.txt.sig");
-//
-//            SignatureManagment.signFile("message.txt", 688238868389858045l, out, "stagod".toCharArray());
-//
-//            CryptionManagement.encryptFile("message.txt.sig.gpg", "message.txt.sig", pubKeys , false, true, PGPEncryptedData.IDEA);
-//
-//            CryptionManagement.decryptFile("message.txt.sig.gpg", keyManagement.getSecretKeyRingCollection(), "stagod".toCharArray());
-//
-//            SignatureManagment.verifyFile("message.txt.sig");
-//
-//            keyManagement.printSecretKeyRingCollection();
-//            keyManagement.close();
-//        }
 }

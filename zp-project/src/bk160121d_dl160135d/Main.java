@@ -1,6 +1,8 @@
 package bk160121d_dl160135d;
 
+import java.awt.FileDialog;
 import java.awt.Frame;
+import java.awt.GridLayout;
 import java.awt.Menu;
 import java.awt.MenuBar;
 import java.awt.event.ActionEvent;
@@ -11,20 +13,29 @@ import java.awt.event.WindowEvent;
 public class Main extends Frame {
     private static final long serialVersionUID = 1L;
 
+    private String selectFile() {
+        FileDialog fd = new FileDialog(new Frame());
+        fd.setVisible(true);
+        if(fd.getFiles().length > 0){
+            return fd.getFiles()[0].getAbsolutePath();
+        }
+        return null;
+    }
+
     private void createKeysHandler() {
         System.out.println("create");
     }
 
     private void enryptHandler() {
-        System.out.println("encrypt");
+        System.out.println(selectFile());
     }
 
     private void decryptHandler() {
-        System.out.println("decrypt");
+        System.out.println(selectFile());
     }
 
     private void verifyHandler() {
-        System.out.println("verify");
+        System.out.println(selectFile());
     }
 
     private void addMenu() {
@@ -60,6 +71,8 @@ public class Main extends Frame {
 
     private void addComponents() {
         addMenu();
+        setLayout(new GridLayout(2, 1));
+
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent we) {

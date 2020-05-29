@@ -44,6 +44,7 @@ public class Main extends JFrame {
 
     private static final String HomeCard = "home",
                                 CreateCard = "create",
+                                ImportCard = "import",
                                 EncryptCard = "encrypt",
                                 DecryptCard = "decrypt",
                                 VerifyCard = "verify";
@@ -73,12 +74,14 @@ public class Main extends JFrame {
         JMenuBar menuBar = new JMenuBar();
         JButton home = new JButton("Home"),
                 create = new JButton("Create key pair"),
+                importButton = new JButton("Import key"),
                 encrypt = new JButton("Encrypt/Sign"),
                 decrypt = new JButton("Decrypt"),
                 verify = new JButton("Verify");
 
         turnButtonIntoMenuItem(home);
         turnButtonIntoMenuItem(create);
+        turnButtonIntoMenuItem(importButton);
         turnButtonIntoMenuItem(encrypt);
         turnButtonIntoMenuItem(decrypt);
         turnButtonIntoMenuItem(verify);
@@ -88,6 +91,14 @@ public class Main extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 CardLayout cl = (CardLayout) (cards.getLayout());
                 cl.show(cards, HomeCard);
+            }
+        });
+
+        importButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                CardLayout cl = (CardLayout) (cards.getLayout());
+                cl.show(cards, ImportCard);
             }
         });
 
@@ -125,6 +136,7 @@ public class Main extends JFrame {
 
         menuBar.add(home);
         menuBar.add(create);
+        menuBar.add(importButton);
         menuBar.add(encrypt);
         menuBar.add(decrypt);
         menuBar.add(verify);
@@ -264,6 +276,67 @@ public class Main extends JFrame {
         panel.add(createButton);
 
         cards.add(panel, CreateCard);
+    }
+
+    private void addImportCard(JPanel cards) {
+        JPanel panel = new JPanel(new GridLayout(0, 1));
+
+        JPanel publicFilepickerPanel = new JPanel(new GridLayout(1, 0));
+        JLabel publicFilePathLabel = new JLabel("No file selected.");
+        JButton publicFilepickerButton = new JButton("Choose file");
+        publicFilepickerButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                publicFilePathLabel.setText(selectFile());
+            }
+        });
+        publicFilepickerPanel.add(publicFilepickerButton);
+        publicFilepickerPanel.add(publicFilePathLabel);
+
+        JButton publicImportButton = new JButton("Import public key");
+        publicImportButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                keyManagement.importPublicKey(publicFilePathLabel.getText());
+
+                publicKeyTable.setModel(new KeysTableModel(keyManagement.getPublicKeyList()));
+
+                CardLayout cl = (CardLayout) (cards.getLayout());
+                cl.show(cards, HomeCard);
+            }
+        });
+
+        JPanel secretFilepickerPanel = new JPanel(new GridLayout(1, 0));
+        JLabel secretFilePathLabel = new JLabel("No file selected.");
+        JButton secretFilepickerButton = new JButton("Choose file");
+        secretFilepickerButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                secretFilePathLabel.setText(selectFile());
+            }
+        });
+        secretFilepickerPanel.add(secretFilepickerButton);
+        secretFilepickerPanel.add(secretFilePathLabel);
+
+        JButton secretImportButton = new JButton("Import secret key");
+        secretImportButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                keyManagement.importSecretKey(secretFilePathLabel.getText());
+
+                secretKeyTable.setModel(new KeysTableModel(keyManagement.getSecretKeyList()));
+
+                CardLayout cl = (CardLayout) (cards.getLayout());
+                cl.show(cards, HomeCard);
+            }
+        });
+
+        panel.add(secretFilepickerPanel);
+        panel.add(secretImportButton);
+        panel.add(publicFilepickerPanel);
+        panel.add(publicImportButton);
+
+        cards.add(panel, ImportCard);
     }
 
     private void addEncryptCard(JPanel cards) {
@@ -494,6 +567,7 @@ public class Main extends JFrame {
 
         addHomeCard(cards);
         addCreateCard(cards);
+        addImportCard(cards);
         addEncryptCard(cards);
         addDecryptCard(cards);
         addVerifyCard(cards);

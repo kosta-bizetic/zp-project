@@ -229,8 +229,7 @@ public class KeyManagement {
     }
 
     public void importPublicKey(String path) {
-        try {
-            FileInputStream stream = new FileInputStream(path);
+        try (FileInputStream stream = new FileInputStream(path);) {
             PGPPublicKeyRing publicKeyRing = new PGPPublicKeyRing(PGPUtil.getDecoderStream(stream), new BcKeyFingerprintCalculator());
             this.publicCollection = PGPPublicKeyRingCollection.addPublicKeyRing(this.publicCollection, publicKeyRing);
         } catch (FileNotFoundException e) {
@@ -244,8 +243,7 @@ public class KeyManagement {
     }
 
     public void importSecretKey(String path) {
-        try {
-            FileInputStream stream = new FileInputStream(path);
+        try (FileInputStream stream = new FileInputStream(path)) {
             PGPSecretKeyRing secretKeyRing = new PGPSecretKeyRing(PGPUtil.getDecoderStream(stream), new BcKeyFingerprintCalculator());
             this.secretCollection = PGPSecretKeyRingCollection.addSecretKeyRing(this.secretCollection, secretKeyRing);
         } catch (FileNotFoundException e) {

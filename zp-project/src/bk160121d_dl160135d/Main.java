@@ -169,7 +169,7 @@ public class Main extends JFrame {
 
         addSecretKeyTable(panel, keyManagement.getSecretKeyList());
 
-        JPanel myKeysExportPanel = new JPanel(new GridLayout(1, 2));
+        JPanel myKeysButtonPanel = new JPanel(new GridLayout(1, 3));
 
         JButton exportMySecretButton = new JButton("Export secret key");
         exportMySecretButton.addActionListener(new ActionListener() {
@@ -182,7 +182,7 @@ public class Main extends JFrame {
                 keyManagement.exportSecretKey(keyID, email + "-secret.asc");
             }
         });
-        myKeysExportPanel.add(exportMySecretButton);
+        myKeysButtonPanel.add(exportMySecretButton);
 
         JButton exportMyPublicButton = new JButton("Export public key");
         exportMyPublicButton.addActionListener(new ActionListener() {
@@ -195,11 +195,27 @@ public class Main extends JFrame {
                 keyManagement.exportPublicKey(keyID, email + "-public.asc");
             }
         });
-        myKeysExportPanel.add(exportMyPublicButton);
+        myKeysButtonPanel.add(exportMyPublicButton);
 
-        panel.add(myKeysExportPanel);
+        JButton deleteMyKeyButton = new JButton("Delete key");
+        deleteMyKeyButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                long keyID =
+                        Long.parseLong(((String) secretKeyTable.getValueAt(secretKeyTable.getSelectedRow(), 2)));
+
+                keyManagement.deleteSecretKey(keyID);
+
+                secretKeyTable.setModel(new KeysTableModel(keyManagement.getSecretKeyList()));
+            }
+        });
+        myKeysButtonPanel.add(deleteMyKeyButton);
+
+        panel.add(myKeysButtonPanel);
 
         addPublicKeyTable(panel, keyManagement.getPublicKeyList());
+
+        JPanel otherKeysButtonPanel = new JPanel(new GridLayout(1, 2));
 
         JButton exportPublicButton = new JButton("Export public key");
         exportPublicButton.addActionListener(new ActionListener() {
@@ -212,7 +228,23 @@ public class Main extends JFrame {
                 keyManagement.exportPublicKey(keyID, email + "-public.asc");
             }
         });
-        panel.add(exportPublicButton);
+        otherKeysButtonPanel.add(exportPublicButton);
+
+        JButton deleteOtherKeyButton = new JButton("Delete key");
+        deleteOtherKeyButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                long keyID =
+                        Long.parseLong(((String) publicKeyTable.getValueAt(publicKeyTable.getSelectedRow(), 2)));
+
+                keyManagement.deletePublicKey(keyID);
+
+                publicKeyTable.setModel(new KeysTableModel(keyManagement.getPublicKeyList()));
+            }
+        });
+        otherKeysButtonPanel.add(deleteOtherKeyButton);
+
+        panel.add(otherKeysButtonPanel);
 
         cards.add(panel, HomeCard);
     }

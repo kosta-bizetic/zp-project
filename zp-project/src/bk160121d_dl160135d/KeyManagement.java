@@ -115,6 +115,24 @@ public class KeyManagement {
         return secretKeyRing.getSecretKey().getKeyID();
     }
 
+    public void deleteSecretKey(long keyID) {
+        try {
+            secretCollection = PGPSecretKeyRingCollection.removeSecretKeyRing(secretCollection, secretCollection.getSecretKeyRing(keyID));
+        } catch (PGPException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    public void deletePublicKey(long keyID) {
+        try {
+            publicCollection = PGPPublicKeyRingCollection.removePublicKeyRing(publicCollection, publicCollection.getPublicKeyRing(keyID));
+        } catch (PGPException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
     public List<List<String>> getSecretKeyList() {
         List<List<String>> ret = new ArrayList<>();
         Iterator<PGPSecretKeyRing> iter =  secretCollection.getKeyRings();

@@ -226,6 +226,10 @@ public class KeyManagement {
         }
     }
 
+    public void exportPublicKey(long keyID, String path) {
+        exportPublicKey(getPublicKey(keyID), path);
+    }
+
     public void importPublicKey(String path) {
         try {
             FileInputStream stream = new FileInputStream(path);

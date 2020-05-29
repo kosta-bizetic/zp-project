@@ -71,15 +71,25 @@ public class Main extends JFrame {
 
     private void addMenu(JPanel cards) {
         JMenuBar menuBar = new JMenuBar();
-        JButton create = new JButton("Create key pair"),
+        JButton home = new JButton("Home"),
+                create = new JButton("Create key pair"),
                 encrypt = new JButton("Encrypt/Sign"),
                 decrypt = new JButton("Decrypt"),
                 verify = new JButton("Verify");
 
+        turnButtonIntoMenuItem(home);
         turnButtonIntoMenuItem(create);
         turnButtonIntoMenuItem(encrypt);
         turnButtonIntoMenuItem(decrypt);
         turnButtonIntoMenuItem(verify);
+
+        home.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                CardLayout cl = (CardLayout) (cards.getLayout());
+                cl.show(cards, HomeCard);
+            }
+        });
 
         create.addActionListener(new ActionListener() {
             @Override
@@ -113,10 +123,12 @@ public class Main extends JFrame {
             }
         });
 
+        menuBar.add(home);
         menuBar.add(create);
         menuBar.add(encrypt);
         menuBar.add(decrypt);
         menuBar.add(verify);
+
         setJMenuBar(menuBar);
     }
 

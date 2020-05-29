@@ -153,10 +153,55 @@ public class Main extends JFrame {
     }
 
     private void addHomeCard(JPanel cards) {
-        JPanel panel = new JPanel();
-        panel.setLayout(new GridLayout(2, 1));
+        JPanel panel = new JPanel(new GridLayout(4, 1));
+
         addSecretKeyTable(panel, keyManagement.getSecretKeyList());
+
+        JPanel myKeysExportPanel = new JPanel(new GridLayout(1, 2));
+
+        JButton exportMySecretButton = new JButton("Export secret key");
+        exportMySecretButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String email = (String) secretKeyTable.getValueAt(secretKeyTable.getSelectedRow(), 1);
+                long keyID =
+                        Long.parseLong(((String) secretKeyTable.getValueAt(secretKeyTable.getSelectedRow(), 2)));
+
+                keyManagement.exportSecretKey(keyID, email + "-secret.asc");
+            }
+        });
+        myKeysExportPanel.add(exportMySecretButton);
+
+        JButton exportMyPublicButton = new JButton("Export public key");
+        exportMyPublicButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String email = (String) secretKeyTable.getValueAt(secretKeyTable.getSelectedRow(), 1);
+                long keyID =
+                        Long.parseLong(((String) secretKeyTable.getValueAt(secretKeyTable.getSelectedRow(), 2)));
+
+                keyManagement.exportPublicKey(keyID, email + "-public.asc");
+            }
+        });
+        myKeysExportPanel.add(exportMyPublicButton);
+
+        panel.add(myKeysExportPanel);
+
         addPublicKeyTable(panel, keyManagement.getPublicKeyList());
+
+        JButton exportPublicButton = new JButton("Export public key");
+        exportPublicButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String email = (String) publicKeyTable.getValueAt(publicKeyTable.getSelectedRow(), 1);
+                long keyID =
+                        Long.parseLong(((String) publicKeyTable.getValueAt(publicKeyTable.getSelectedRow(), 2)));
+
+                keyManagement.exportPublicKey(keyID, email + "-public.asc");
+            }
+        });
+        panel.add(exportPublicButton);
+
         cards.add(panel, HomeCard);
     }
 
@@ -446,13 +491,17 @@ public class Main extends JFrame {
 
     private void addComponents() {
         JPanel cards = new JPanel(new CardLayout());
+
         addHomeCard(cards);
         addCreateCard(cards);
         addEncryptCard(cards);
         addDecryptCard(cards);
         addVerifyCard(cards);
+
         add(cards);
+
         addMenu(cards);
+
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent we) {

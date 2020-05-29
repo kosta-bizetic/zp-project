@@ -9,7 +9,6 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.security.Security;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -17,7 +16,6 @@ import java.util.List;
 
 import org.bouncycastle.bcpg.ArmoredOutputStream;
 import org.bouncycastle.bcpg.HashAlgorithmTags;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openpgp.PGPEncryptedData;
 import org.bouncycastle.openpgp.PGPException;
 import org.bouncycastle.openpgp.PGPKeyPair;
@@ -262,15 +260,4 @@ public class KeyManagement {
         }
     }
 
-    public static void main(String[] args) {
-        Security.addProvider(new BouncyCastleProvider());
-        try {
-            KeyManagement.getInstance().generateRSAKeyPair(RSA_KEYSIZE.MEDIUM, "Stagod Stagod <stagod@gmail.com>", "sifra".toCharArray());
-        } catch (NoSuchAlgorithmException | NoSuchProviderException | PGPException | IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        KeyManagement.getInstance().close();
-        KeyManagement.getInstance().printSecretKeyRingCollection();
-    }
 }

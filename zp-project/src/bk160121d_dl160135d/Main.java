@@ -43,7 +43,8 @@ public class Main extends JFrame {
 
     private static final String HomeCard = "home",
                                 CreateCard = "create",
-                                EncryptCard = "encrypt";
+                                EncryptCard = "encrypt",
+                                DecryptCard = "decrypt";
 
     private KeyManagement keyManagement = KeyManagement.getInstance();
     private JTable secretKeyTable = null,
@@ -96,7 +97,8 @@ public class Main extends JFrame {
         decrypt.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // TODO
+                CardLayout cl = (CardLayout) (cards.getLayout());
+                cl.show(cards, DecryptCard);
             }
         });
 
@@ -287,8 +289,8 @@ public class Main extends JFrame {
                 if (signFileCB.isSelected()) {
                     long signKeyID =
                             Long.parseLong(((String) signatureKeyList.getValueAt(signatureKeyList.getSelectedRow(), 2)));
-                    try {
-                        SignatureManagment.signFile(inputFilePath, signKeyID, new FileOutputStream(inputFilePath + ".sig"), passphrase.getPassword());
+                    try (FileOutputStream out =  new FileOutputStream(inputFilePath + ".sig")) {
+                        SignatureManagment.signFile(inputFilePath, signKeyID, out, passphrase.getPassword());
                     } catch (NoSuchAlgorithmException | NoSuchProviderException | SignatureException | IOException
                             | PGPException e1) {
                         // TODO Hendlovati pogresnu sifru
@@ -341,11 +343,54 @@ public class Main extends JFrame {
         cards.add(panel, EncryptCard);
     }
 
+    private void addDecryptCard(JPanel cards) {
+        JPanel panel = new JPanel(new GridLayout(0, 1));
+
+        JLabel passphraseLabel = new JLabel("Passphrase:");
+        JPasswordField passphrase = new JPasswordField();
+
+        JPanel filepickerPanel = new JPanel(new GridLayout(1, 0));
+        JLabel filePathLabel = new JLabel("No file selected.");
+        JButton filepickerButton = new JButton("Choose file");
+        filepickerButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                filePathLabel.setText(selectFile());
+            }
+        });
+        filepickerPanel.add(filepickerButton);
+        filepickerPanel.add(filePathLabel);
+
+        JButton decryptButton = new JButton("Decrypt");
+        decryptButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    CryptionManagement.decryptFile(
+                            filePathLabel.getText(),
+                            keyManagement.getSecretKeyRingCollection(),
+                            passphrase.getPassword());
+                } catch (NoSuchProviderException | IOException e1) {
+                    // TODO Hendlovati pogresnu sifru
+                    e1.printStackTrace();
+                }
+            }
+        });
+
+        panel.add(passphraseLabel);
+        panel.add(passphrase);
+        panel.add(filepickerPanel);
+        panel.add(decryptButton);
+
+        cards.add(panel, DecryptCard);
+    }
+
     private void addComponents() {
         JPanel cards = new JPanel(new CardLayout());
         addHomeCard(cards);
         addCreateCard(cards);
         addEncryptCard(cards);
+        addDecryptCard(cards);
         add(cards);
         addMenu(cards);
         addWindowListener(new WindowAdapter() {
@@ -358,7 +403,7 @@ public class Main extends JFrame {
 
     public Main() {
         super("OpenPGP");
-        setBounds(300, 300, 600, 800);
+        setBounds(300, 200, 600, 800);
         setResizable(false);
         addComponents();
         setVisible(true);

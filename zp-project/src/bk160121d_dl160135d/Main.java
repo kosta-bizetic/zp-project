@@ -1,22 +1,29 @@
 package bk160121d_dl160135d;
 
+import java.awt.CardLayout;
 import java.awt.FileDialog;
 import java.awt.Frame;
 import java.awt.GridLayout;
-import java.awt.Menu;
-import java.awt.MenuBar;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenuBar;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.border.TitledBorder;
 
-public class Main extends Frame {
+public class Main extends JFrame {
     private static final long serialVersionUID = 1L;
+
+    private static final String HomeCard = "home",
+                                CreateCard = "create";
 
     private KeyManagement keyManagement = KeyManagement.getInstance();
 
@@ -29,68 +36,95 @@ public class Main extends Frame {
         return null;
     }
 
-    private void createKeysHandler() {
-        System.out.println("create");
+    private void turnButtonIntoMenuItem(JButton button) {
+        button.setOpaque(true);
+        button.setContentAreaFilled(false);
+//        button.setBorderPainted(false);
+        button.setFocusable(false);
     }
 
-    private void enryptHandler() {
-        System.out.println(selectFile());
-    }
+    private void addMenu(JPanel cards) {
+        JMenuBar menuBar = new JMenuBar();
+        JButton create = new JButton("Create key pair"),
+                encrypt = new JButton("Encrypt/Sign"),
+                decrypt = new JButton("Decrypt"),
+                verify = new JButton("Verify");
 
-    private void decryptHandler() {
-        System.out.println(selectFile());
-    }
+        turnButtonIntoMenuItem(create);
+        turnButtonIntoMenuItem(encrypt);
+        turnButtonIntoMenuItem(decrypt);
+        turnButtonIntoMenuItem(verify);
 
-    private void verifyHandler() {
-        System.out.println(selectFile());
-    }
-
-    private void addMenu() {
-        MenuBar menuBar = new MenuBar();
-        Menu menu = new Menu("Actions");
-        menu.add("Create key pair");
-        menu.add("Encrypt/Sign");
-        menu.add("Decrypt");
-        menu.add("Verify");
-        menu.addActionListener(new ActionListener() {
+        create.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String action = e.getActionCommand();
-                switch (action) {
-                case "Create key pair":
-                    createKeysHandler();
-                    break;
-                case "Encrypt/Sign":
-                    enryptHandler();
-                    break;
-                case "Decrypt":
-                    decryptHandler();
-                    break;
-                case "Verify":
-                    verifyHandler();
-                    break;
-                }
+                CardLayout cl = (CardLayout) (cards.getLayout());
+                cl.show(cards, CreateCard);
             }
         });
-        menuBar.add(menu);
-        setMenuBar(menuBar);
+
+        encrypt.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // TODO
+            }
+        });
+
+        decrypt.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // TODO
+            }
+        });
+
+        verify.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // TODO
+            }
+        });
+
+        menuBar.add(create);
+        menuBar.add(encrypt);
+        menuBar.add(decrypt);
+        menuBar.add(verify);
+        setJMenuBar(menuBar);
     }
 
-    private void addKeysTable(String title, java.util.List<java.util.List<String>> keyInfoList) {
+    private void addKeysTable(JPanel panel, String title, java.util.List<java.util.List<String>> keyInfoList) {
         JTable jt = new JTable(new KeysTableModel(keyInfoList));
         JScrollPane sp = new JScrollPane(jt);
         sp.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),
                      title,
                      TitledBorder.CENTER,
                      TitledBorder.TOP));
-        add(sp);
+        panel.add(sp);
+    }
+
+    private void addHomeCard(JPanel cards) {
+        JPanel panel = new JPanel();
+        panel.setLayout(new GridLayout(2, 1));
+        addKeysTable(panel, "My Keys", keyManagement.getSecretKeyList());
+        addKeysTable(panel, "Other Keys", keyManagement.getPublicKeyList());
+        cards.add(panel, HomeCard);
+    }
+
+    private void addCreateCard(JPanel cards) {
+        JPanel panel = new JPanel();
+        panel.setLayout(new GridLayout(2, 1));
+
+        // TODO
+
+        panel.add(new JLabel("test"));
+        cards.add(panel, CreateCard);
     }
 
     private void addComponents() {
-        addMenu();
-        setLayout(new GridLayout(2, 1));
-        addKeysTable("My Keys", keyManagement.getSecretKeyList());
-        addKeysTable("Other Keys", keyManagement.getPublicKeyList());
+        JPanel cards = new JPanel(new CardLayout());
+        addHomeCard(cards);
+        addCreateCard(cards);
+        add(cards);
+        addMenu(cards);
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent we) {

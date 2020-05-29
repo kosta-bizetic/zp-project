@@ -8,14 +8,18 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.Security;
+import java.security.SignatureException;
+import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuBar;
@@ -28,7 +32,9 @@ import javax.swing.JTextField;
 import javax.swing.border.TitledBorder;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openpgp.PGPEncryptedData;
 import org.bouncycastle.openpgp.PGPException;
+import org.bouncycastle.openpgp.PGPPublicKey;
 
 import bk160121d_dl160135d.KeyManagement.RSA_KEYSIZE;
 
@@ -36,7 +42,8 @@ public class Main extends JFrame {
     private static final long serialVersionUID = 1L;
 
     private static final String HomeCard = "home",
-                                CreateCard = "create";
+                                CreateCard = "create",
+                                EncryptCard = "encrypt";
 
     private KeyManagement keyManagement = KeyManagement.getInstance();
     private JTable secretKeyTable = null,
@@ -81,7 +88,8 @@ public class Main extends JFrame {
         encrypt.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // TODO
+                CardLayout cl = (CardLayout) (cards.getLayout());
+                cl.show(cards, EncryptCard);
             }
         });
 
@@ -144,9 +152,9 @@ public class Main extends JFrame {
         JPasswordField passphrase = new JPasswordField();
 
         ButtonGroup size = new ButtonGroup();
-        JRadioButton small = new JRadioButton("Small"),
-                     medium = new JRadioButton("Medium"),
-                     large = new JRadioButton("Large");
+        JRadioButton small = new JRadioButton("Small (1024b)"),
+                     medium = new JRadioButton("Medium (2048b)"),
+                     large = new JRadioButton("Large (4096b)");
         size.add(small);
         size.add(medium);
         size.add(large);
@@ -195,10 +203,149 @@ public class Main extends JFrame {
         cards.add(panel, CreateCard);
     }
 
+    private void addEncryptCard(JPanel cards) {
+        JPanel panel = new JPanel(new GridLayout(0, 1));
+
+        JCheckBox encryptFileCB = new JCheckBox("Encrypt file"),
+                  signFileCB = new JCheckBox("Sign file"),
+                  compressionCB = new JCheckBox("Compress file"),
+                  radixCB = new JCheckBox("Radix-64");
+
+        JTable signatureKeyList = new JTable(new KeysTableModel(keyManagement.getSecretKeyList()));
+        JScrollPane signatureKeyScrollPane = new JScrollPane(signatureKeyList);
+        signatureKeyScrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),
+                     "Select signature key",
+                     TitledBorder.CENTER,
+                     TitledBorder.TOP));
+
+        JLabel passphraseLabel = new JLabel("Passphrase:");
+        JPasswordField passphrase = new JPasswordField();
+
+        signatureKeyScrollPane.setVisible(false);
+        passphraseLabel.setVisible(false);
+        passphrase.setVisible(false);
+        signFileCB.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                signatureKeyScrollPane.setVisible(!signatureKeyScrollPane.isVisible());
+                passphraseLabel.setVisible(!passphraseLabel.isVisible());
+                passphrase.setVisible(!passphrase.isVisible());
+            }
+        });
+
+        JPanel algoChoicePanel = new JPanel(new GridLayout(1, 0));
+        ButtonGroup encAlgorithms = new ButtonGroup();
+        JRadioButton idea = new JRadioButton("IDEA"),
+                     tdes = new JRadioButton("3DES-EDE");
+        encAlgorithms.add(tdes);
+        encAlgorithms.add(idea);
+        algoChoicePanel.add(tdes);
+        tdes.setSelected(true);
+        algoChoicePanel.add(idea);
+
+        java.util.List<java.util.List<String>> allKeys = keyManagement.getSecretKeyList();
+        allKeys.addAll(keyManagement.getPublicKeyList());
+        JTable encryptionKeyList = new JTable(new KeysTableModel(allKeys));
+        JScrollPane encryptionKeyScrollPane = new JScrollPane(encryptionKeyList);
+        encryptionKeyScrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),
+                     "Encrypt for:",
+                     TitledBorder.CENTER,
+                     TitledBorder.TOP));
+        encryptionKeyScrollPane.setVisible(false);
+
+        algoChoicePanel.setVisible(false);
+        compressionCB.setVisible(false);
+        radixCB.setVisible(false);
+        encryptFileCB.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                algoChoicePanel.setVisible(!algoChoicePanel.isVisible());
+                encryptionKeyScrollPane.setVisible(!encryptionKeyScrollPane.isVisible());
+                compressionCB.setVisible(!compressionCB.isVisible());
+                radixCB.setVisible(!radixCB.isVisible());
+            }
+        });
+
+        JPanel filepickerPanel = new JPanel(new GridLayout(1, 0));
+        JLabel filePathLabel = new JLabel("No file selected.");
+        JButton filepickerButton = new JButton("Choose file");
+        filepickerButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                filePathLabel.setText(selectFile());
+            }
+        });
+        filepickerPanel.add(filepickerButton);
+        filepickerPanel.add(filePathLabel);
+
+        JButton submitButton = new JButton("Submit");
+        submitButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String inputFilePath = filePathLabel.getText();
+
+                if (signFileCB.isSelected()) {
+                    long signKeyID =
+                            Long.parseLong(((String) signatureKeyList.getValueAt(signatureKeyList.getSelectedRow(), 2)));
+                    try {
+                        SignatureManagment.signFile(inputFilePath, signKeyID, new FileOutputStream(inputFilePath + ".sig"), passphrase.getPassword());
+                    } catch (NoSuchAlgorithmException | NoSuchProviderException | SignatureException | IOException
+                            | PGPException e1) {
+                        // TODO Hendlovati pogresnu sifru
+                        e1.printStackTrace();
+                    }
+                }
+
+                if (encryptFileCB.isSelected()) {
+                    java.util.List<PGPPublicKey> encryptionKeyList = new ArrayList<>();
+                    long encryptKeyID =
+                            Long.parseLong(((String) signatureKeyList.getValueAt(signatureKeyList.getSelectedRow(), 2)));
+                    encryptionKeyList.add(keyManagement.getPublicKey(encryptKeyID));
+
+                    int encAlgo = PGPEncryptedData.TRIPLE_DES;
+                    if (idea.isSelected()) encAlgo = PGPEncryptedData.IDEA;
+
+                    if (signFileCB.isSelected()) inputFilePath += ".sig";
+
+                    try {
+                        CryptionManagement.encryptFile(
+                                inputFilePath + ".gpg",
+                                inputFilePath,
+                                encryptionKeyList,
+                                radixCB.isSelected(),
+                                compressionCB.isSelected(),
+                                encAlgo);
+                    } catch (NoSuchProviderException | IOException | PGPException e1) {
+                        // TODO Auto-generated catch block
+                        e1.printStackTrace();
+                    }
+                }
+
+                CardLayout cl = (CardLayout) (cards.getLayout());
+                cl.show(cards, HomeCard);
+            }
+        });
+
+        panel.add(signFileCB);
+        panel.add(signatureKeyScrollPane);
+        panel.add(passphraseLabel);
+        panel.add(passphrase);
+        panel.add(encryptFileCB);
+        panel.add(algoChoicePanel);
+        panel.add(encryptionKeyScrollPane);
+        panel.add(compressionCB);
+        panel.add(radixCB);
+        panel.add(filepickerPanel);
+        panel.add(submitButton);
+
+        cards.add(panel, EncryptCard);
+    }
+
     private void addComponents() {
         JPanel cards = new JPanel(new CardLayout());
         addHomeCard(cards);
         addCreateCard(cards);
+        addEncryptCard(cards);
         add(cards);
         addMenu(cards);
         addWindowListener(new WindowAdapter() {
@@ -211,7 +358,7 @@ public class Main extends JFrame {
 
     public Main() {
         super("OpenPGP");
-        setBounds(300, 300, 600, 300);
+        setBounds(300, 300, 600, 800);
         setResizable(false);
         addComponents();
         setVisible(true);

@@ -1,6 +1,7 @@
 package bk160121d_dl160135d;
 
 import java.awt.CardLayout;
+import java.awt.Color;
 import java.awt.FileDialog;
 import java.awt.Frame;
 import java.awt.GridLayout;
@@ -44,9 +45,11 @@ public class Main extends JFrame {
     private static final String HomeCard = "home",
                                 CreateCard = "create",
                                 EncryptCard = "encrypt",
-                                DecryptCard = "decrypt";
+                                DecryptCard = "decrypt",
+                                VerifyCard = "verify";
 
     private KeyManagement keyManagement = KeyManagement.getInstance();
+
     private JTable secretKeyTable = null,
                    publicKeyTable = null;
 
@@ -105,7 +108,8 @@ public class Main extends JFrame {
         verify.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // TODO
+                CardLayout cl = (CardLayout) (cards.getLayout());
+                cl.show(cards, VerifyCard);
             }
         });
 
@@ -374,6 +378,9 @@ public class Main extends JFrame {
                     // TODO Hendlovati pogresnu sifru
                     e1.printStackTrace();
                 }
+
+                CardLayout cl = (CardLayout) (cards.getLayout());
+                cl.show(cards, HomeCard);
             }
         });
 
@@ -385,12 +392,53 @@ public class Main extends JFrame {
         cards.add(panel, DecryptCard);
     }
 
+    private void addVerifyCard(JPanel cards) {
+        JPanel panel = new JPanel(new GridLayout(0, 1));
+
+        JLabel verifyResultLabel = new JLabel();
+        verifyResultLabel.setVisible(false);
+
+        JPanel filepickerPanel = new JPanel(new GridLayout(1, 0));
+        JLabel filePathLabel = new JLabel("No file selected.");
+        JButton filepickerButton = new JButton("Choose file");
+        filepickerButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                filePathLabel.setText(selectFile());
+            }
+        });
+        filepickerPanel.add(filepickerButton);
+        filepickerPanel.add(filePathLabel);
+
+        JButton verifyButton = new JButton("Verify");
+        verifyButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String verifyResult = SignatureManagment.verifyFile(filePathLabel.getText());
+                verifyResultLabel.setText(verifyResult);
+                if (SignatureManagment.verificationFailure.equals(verifyResult)) {
+                    verifyResultLabel.setForeground(Color.RED);
+                } else {
+                    verifyResultLabel.setForeground(Color.GREEN);
+                }
+                verifyResultLabel.setVisible(true);
+            }
+        });
+
+        panel.add(verifyResultLabel);
+        panel.add(filepickerPanel);
+        panel.add(verifyButton);
+
+        cards.add(panel, VerifyCard);
+    }
+
     private void addComponents() {
         JPanel cards = new JPanel(new CardLayout());
         addHomeCard(cards);
         addCreateCard(cards);
         addEncryptCard(cards);
         addDecryptCard(cards);
+        addVerifyCard(cards);
         add(cards);
         addMenu(cards);
         addWindowListener(new WindowAdapter() {

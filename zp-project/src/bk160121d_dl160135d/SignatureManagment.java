@@ -34,16 +34,19 @@ import org.bouncycastle.openpgp.operator.jcajce.JcePBESecretKeyDecryptorBuilder;
 
 public class SignatureManagment {
 
-    public static void verifyFile(String filePath) {
+    public static final String verificationFailure = "Signature verification failed.";
+
+    public static String verifyFile(String filePath) {
         try (InputStream in = new FileInputStream(filePath)) {
-            verifyFile(in);
+            return verifyFile(in);
         } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+        return verificationFailure;
     }
 
-    private static void verifyFile(InputStream in) throws Exception
+    private static String verifyFile(InputStream in) throws Exception
     {
         in = PGPUtil.getDecoderStream(in);
 
@@ -71,9 +74,9 @@ public class SignatureManagment {
         PGPSignatureList p3 = (PGPSignatureList) pgpFact.nextObject();
 
         if (ops.verify(p3.get(0))) {
-            System.out.println("Signature verified.\n Signed by: " + key.getUserIDs().next());
+            return "Signature verified.\n Signed by: " + key.getUserIDs().next();
         } else {
-            System.out.println("Signature verification failed.");
+            return verificationFailure;
         }
     }
 

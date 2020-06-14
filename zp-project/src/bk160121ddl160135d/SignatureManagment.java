@@ -1,4 +1,4 @@
-package bk160121d_dl160135d;
+package bk160121ddl160135d;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -36,6 +36,14 @@ public class SignatureManagment {
 
     public static final String verificationFailure = "Signature verification failed.";
 
+    /**
+     * Verifies the signature of a given file.
+     *
+     * @param filePath
+     * Path of file whose signature should be verified
+     * @return
+     * Verification result text.
+     */
     public static String verifyFile(String filePath) {
         try (InputStream in = new FileInputStream(filePath)) {
             return verifyFile(in);
@@ -80,6 +88,23 @@ public class SignatureManagment {
         }
     }
 
+    /**
+     * Signs a file.
+     *
+     * @param filePath
+     * Path of file to be signed
+     * @param keyID
+     * ID of secret key with which to sign the file.
+     * @param out
+     * Output stream to which the signed file will be written.
+     * @param passPhrase
+     * Passphrase for private key decryption.
+     * @throws IOException
+     * @throws NoSuchAlgorithmException
+     * @throws NoSuchProviderException
+     * @throws PGPException
+     * @throws SignatureException
+     */
     public static void signFile(String filePath, long keyID, OutputStream out, char[] passPhrase)
             throws IOException, NoSuchAlgorithmException, NoSuchProviderException, PGPException, SignatureException {
 

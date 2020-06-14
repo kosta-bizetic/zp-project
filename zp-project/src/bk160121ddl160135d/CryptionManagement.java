@@ -1,4 +1,4 @@
-package bk160121d_dl160135d;
+package bk160121ddl160135d;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -37,6 +37,18 @@ import org.bouncycastle.util.io.Streams;
 
 public class CryptionManagement {
 
+    /**
+     * Decrypts a file.
+     *
+     * @param inputFileName
+     * Name of file to be decrypted.
+     * @param secRingColl
+     * Secret key ring collection.
+     * @param passwd
+     * Passphrase for private key decryption.
+     * @throws IOException
+     * @throws NoSuchProviderException
+     */
     public static void decryptFile(
         String                      inputFileName,
         PGPSecretKeyRingCollection  secRingColl,
@@ -167,6 +179,25 @@ public class CryptionManagement {
         }
     }
 
+    /**
+     * Encrypts a file.
+     *
+     * @param outputFileName
+     * Path to which encrypted enrcypted file will be written.
+     * @param inputFileName
+     * Path to the file that will be encrypted.
+     * @param encKeys
+     * List of public keys with which to encrypt the session key.
+     * @param armor
+     * Whether radix-64 conversion is required.
+     * @param compression
+     * Whether compression is required
+     * @param encAlgorithm
+     * Encryption algorithm to be used.
+     * @throws IOException
+     * @throws NoSuchProviderException
+     * @throws PGPException
+     */
     public static void encryptFile(
         String              outputFileName,
         String              inputFileName,

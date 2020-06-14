@@ -1,4 +1,4 @@
-package bk160121d_dl160135d;
+package bk160121ddl160135d;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -37,6 +37,9 @@ import org.bouncycastle.openpgp.operator.jcajce.JcePBESecretKeyEncryptorBuilder;
 
 public class KeyManagement {
 
+    /**
+     * Size of RSA key.
+     */
     public enum RSA_KEYSIZE {
         SMALL(1024), MEDIUM(2048), LARGE(4098);
         int keysize;
@@ -70,6 +73,11 @@ public class KeyManagement {
         }
     }
 
+    /**
+     * Writes all the keys that were created/imported during this session to file storage.
+     *
+     * @return
+     */
     public void close() {
         try {
             secretCollection.encode(new FileOutputStream("secret-keystore"));
@@ -83,6 +91,12 @@ public class KeyManagement {
         }
     }
 
+    /**
+     * Gets and instance of the KeyManagement class.
+     *
+     * @return
+     * KeyManagement class instance.
+     */
     public static KeyManagement getInstance() {
         if (KeyManagement.instance == null) {
             KeyManagement.instance = new KeyManagement();
@@ -90,6 +104,23 @@ public class KeyManagement {
         return KeyManagement.instance;
     }
 
+    /**
+     * Generates RSA key pair.
+     *
+     * @param keysize
+     * Size of generated RSA keys.
+     * @param identity
+     * Identity of RSA key owner (name surname\<email\>).
+     * @param passPhrase
+     * Passphrase for private key encryption.
+     * @return
+     * Key ID of generated key pair.
+     * @throws PGPException
+     * @throws NoSuchAlgorithmException
+     * @throws NoSuchProviderException
+     * @throws FileNotFoundException
+     * @throws IOException
+     */
     public long generateRSAKeyPair(
             RSA_KEYSIZE keysize,
             String identity,
@@ -115,6 +146,12 @@ public class KeyManagement {
         return secretKeyRing.getSecretKey().getKeyID();
     }
 
+    /**
+     * Delete secret key with given key ID.
+     *
+     * @param keyID
+     * ID of the key to be deleted.
+     */
     public void deleteSecretKey(long keyID) {
         try {
             secretCollection = PGPSecretKeyRingCollection.removeSecretKeyRing(secretCollection, secretCollection.getSecretKeyRing(keyID));
@@ -124,6 +161,12 @@ public class KeyManagement {
         }
     }
 
+    /**
+     * Delete public key with given key ID.
+     *
+     * @param keyID
+     * ID of the key to be deleted.
+     */
     public void deletePublicKey(long keyID) {
         try {
             publicCollection = PGPPublicKeyRingCollection.removePublicKeyRing(publicCollection, publicCollection.getPublicKeyRing(keyID));
@@ -133,6 +176,12 @@ public class KeyManagement {
         }
     }
 
+    /**
+     * Gets all secret keys.
+     *
+     * @return
+     * List of userId, email and key ID for all secret keys.
+     */
     public List<List<String>> getSecretKeyList() {
         List<List<String>> ret = new ArrayList<>();
         Iterator<PGPSecretKeyRing> iter =  secretCollection.getKeyRings();
@@ -151,6 +200,12 @@ public class KeyManagement {
         return ret;
     }
 
+    /**
+     * Gets all public keys.
+     *
+     * @return
+     * List of userId, email and key ID for all public keys.
+     */
     public List<List<String>> getPublicKeyList() {
         List<List<String>> ret = new ArrayList<>();
         Iterator<PGPPublicKeyRing> iter =  publicCollection.getKeyRings();
@@ -169,19 +224,28 @@ public class KeyManagement {
         return ret;
     }
 
-    public void printSecretKeyRingCollection() {
-        Iterator<PGPSecretKeyRing> iter =  secretCollection.getKeyRings();
-        while (iter.hasNext()) {
-            PGPSecretKeyRing secretKeyRing = iter.next();
-            PGPSecretKey secretKey = secretKeyRing.getSecretKey();
-            Iterator<String> iter2 = secretKey.getUserIDs();
-            System.out.println(secretKey.getKeyID());
-            while (iter2.hasNext()) {
-                System.out.println(iter2.next() + " " + secretKey.getKeyID());
-            }
-        }
-    }
 
+//    public void printSecretKeyRingCollection() {
+//        Iterator<PGPSecretKeyRing> iter =  secretCollection.getKeyRings();
+//        while (iter.hasNext()) {
+//            PGPSecretKeyRing secretKeyRing = iter.next();
+//            PGPSecretKey secretKey = secretKeyRing.getSecretKey();
+//            Iterator<String> iter2 = secretKey.getUserIDs();
+//            System.out.println(secretKey.getKeyID());
+//            while (iter2.hasNext()) {
+//                System.out.println(iter2.next() + " " + secretKey.getKeyID());
+//            }
+//        }
+//    }
+
+    /**
+     * Gets a public key.
+     *
+     * @param keyID
+     * Key ID of the desired public key.
+     * @return
+     * Public key with the given key ID.
+     */
     public PGPPublicKey getPublicKey(long keyID)
     {
         PGPPublicKey pubKey = null;
@@ -200,11 +264,25 @@ public class KeyManagement {
         return pubKey;
     }
 
+    /**
+     * Gets the secret key collection
+     *
+     * @return
+     * Secret key collection.
+     */
     public PGPSecretKeyRingCollection getSecretKeyRingCollection()
     {
         return this.secretCollection;
     }
 
+    /**
+     * Exports a secret key.
+     *
+     * @param key
+     * Secret key to be exported.
+     * @param path
+     * File path to which the key should be exported.
+     */
     public void exportSecretKey(PGPSecretKey key, String path) {
         try {
             FileOutputStream stream = new FileOutputStream(path);
@@ -219,6 +297,14 @@ public class KeyManagement {
         }
     }
 
+    /**
+     * Exports a secret key.
+     *
+     * @param key
+     * Key ID of the secret key to be exported.
+     * @param path
+     * File path to which the key should be exported.
+     */
     public void exportSecretKey(long keyID, String path) {
         try {
             exportSecretKey(this.secretCollection.getSecretKey(keyID), path);
@@ -228,6 +314,14 @@ public class KeyManagement {
         }
     }
 
+    /**
+     * Exports a public key.
+     *
+     * @param key
+     * Public key to be exported.
+     * @param path
+     * File path to which the key should be exported.
+     */
     public void exportPublicKey(PGPPublicKey key, String path) {
         try {
             FileOutputStream stream = new FileOutputStream(path);
@@ -242,10 +336,24 @@ public class KeyManagement {
         }
     }
 
+    /**
+     * Exports a public key.
+     *
+     * @param key
+     * Key ID of the public key to be exported.
+     * @param path
+     * File path to which the key should be exported.
+     */
     public void exportPublicKey(long keyID, String path) {
         exportPublicKey(getPublicKey(keyID), path);
     }
 
+    /**
+     * Imports a public key.
+     *
+     * @param path
+     * File path from which the key should be imported.
+     */
     public void importPublicKey(String path) {
         try (FileInputStream stream = new FileInputStream(path);) {
             PGPPublicKeyRing publicKeyRing = new PGPPublicKeyRing(PGPUtil.getDecoderStream(stream), new BcKeyFingerprintCalculator());
@@ -260,6 +368,12 @@ public class KeyManagement {
 
     }
 
+    /**
+     * Imports a secret key.
+     *
+     * @param path
+     * File path from which the key should be imported.
+     */
     public void importSecretKey(String path) {
         try (FileInputStream stream = new FileInputStream(path)) {
             PGPSecretKeyRing secretKeyRing = new PGPSecretKeyRing(PGPUtil.getDecoderStream(stream), new BcKeyFingerprintCalculator());

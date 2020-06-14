@@ -1,4 +1,4 @@
-package bk160121d_dl160135d;
+package bk160121ddl160135d;
 
 import java.awt.CardLayout;
 import java.awt.Color;
@@ -37,7 +37,7 @@ import org.bouncycastle.openpgp.PGPEncryptedData;
 import org.bouncycastle.openpgp.PGPException;
 import org.bouncycastle.openpgp.PGPPublicKey;
 
-import bk160121d_dl160135d.KeyManagement.RSA_KEYSIZE;
+import bk160121ddl160135d.KeyManagement.RSA_KEYSIZE;
 
 public class Main extends JFrame {
     private static final long serialVersionUID = 1L;
